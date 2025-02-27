@@ -61,7 +61,7 @@ class Order(models.Model):
     tracking_number = models.CharField(max_length=255, blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
     ip_address = models.GenericIPAddressField(blank=True, null=True)
-    user_agent = models.TextField(max_length=255, blank=True, null=True)
+    user_agent = models.TextField(blank=True, null=True)
 
     coupon_code = models.CharField(max_length=255, blank=True, null=True)
 
@@ -143,7 +143,8 @@ class OrderItem(models.Model):
         verbose_name_plural = "Order Items"
 
     def __str__(self):
-        return f"{self.product.name} {self.quantity} - {self.variant.name if self.variant else ''}"
+        variant_name = self.variant_name if self.variant_name else ""
+        return f"{self.product_name} {self.quantity} - {variant_name}"
 
     @property
     def subtotal(self):
@@ -197,9 +198,7 @@ class CartItem(models.Model):
     product_variant = models.ForeignKey(
         "products.ProductVariant", on_delete=models.CASCADE, null=True, blank=True
     )
-    product_name = models.CharField(max_length=255)
     quantity = models.PositiveIntegerField(default=1)
-
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -209,7 +208,8 @@ class CartItem(models.Model):
         unique_together = ("cart", "product", "product_variant")
 
     def __str__(self):
-        return f"{self.product.name} {self.quantity} - {self.variant.name if self.variant else ''}"
+        variant_text = f" - {self.product_variant.name}" if self.product_variant else ""
+        return f"{self.product.name} {self.quantity}{variant_text}"
 
     @property
     def price(self):
@@ -223,7 +223,6 @@ class CartItem(models.Model):
 
 
 class Coupon(models.Model):
-
     DISCOUNT_TYPE_CHOICES = [
         ("percentage", "Percentage"),
         ("fixed", "Fixed"),
@@ -237,8 +236,8 @@ class Coupon(models.Model):
         max_digits=10, decimal_places=2, validators=[MinValueValidator(0)]
     )
 
-    minimum_order_count = models.DecimalField(
-        max_digits=10, decimal_places=2, null=True, blank=True
+    minimum_order_amount = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0, validators=[MinValueValidator(0)]
     )
     apply_to_products = models.ManyToManyField(
         "products.Product", blank=True, related_name="coupons"
@@ -250,7 +249,8 @@ class Coupon(models.Model):
     valid_to = models.DateTimeField()
     usage_limit = models.PositiveIntegerField(default=0)
     used_count = models.PositiveIntegerField(default=0)
-
+    is_active = models.BooleanField(default=True)
+    description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

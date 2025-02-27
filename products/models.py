@@ -2,6 +2,7 @@ from django.db import models
 import uuid
 from django.utils.text import slugify
 from django.core.validators import MinValueValidator
+from django.utils.translation import gettext_lazy as _
 
 
 # Create your models here.
@@ -128,10 +129,10 @@ class ProductVariant(models.Model):
     name = models.CharField(max_length=255)
     sku = models.CharField(max_length=100, unique=True)
     price_adjustment = models.DecimalField(
-        max_digits=10, decimal_places=2, validators=[MinValueValidator(0)]
+        max_digits=10, decimal_places=2, default=0, validators=[MinValueValidator(0)]
     )
     stock_quantity = models.PositiveIntegerField(default=0)
-    attribues = models.JSONField(default=dict, blank=True)
+    attributes = models.JSONField(default=dict, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -150,6 +151,34 @@ class ProductVariant(models.Model):
     @property
     def price(self):
         return self.product.price + self.price_adjustment
+
+
+class ProductReview(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    product = models.ForeignKey(
+        Product, on_delete=models.CASCADE, related_name="reviews"
+    )
+    user = models.ForeignKey(
+        "accounts.User", on_delete=models.CASCADE, related_name="reviews"
+    )
+    rating = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)]
+    )
+    title = models.CharField(max_length=255)
+    content = models.TextField()
+    is_verified_purchase = models.BooleanField(default=False)
+    is_approved = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Product Review"
+        verbose_name_plural = "Product Reviews"
+        ordering = ["-created_at"]
+        unique_together = ("product", "user")
+
+    def __str__(self):
+        return f"{self.product.name} - {self.rating} stars by {self.user.email}"
 
 
 class Inventory(models.Model):
@@ -175,10 +204,22 @@ class Inventory(models.Model):
         return self.product.stock_quantity <= self.reorder_level
 
 
-# Add translations to relevant models
-# apps/products/models.py (update)
-from django.db import models
-from django.utils.translation import gettext_lazy as _
+# Language Settings class to be added
+class LanguageSettings:
+    """
+    Helper class for language settings.
+    """
+
+    @staticmethod
+    def get_language_choices():
+        return [
+            ("en", _("English")),
+            ("es", _("Spanish")),
+            ("fr", _("French")),
+            ("de", _("German")),
+            ("zh", _("Chinese")),
+            ("ja", _("Japanese")),
+        ]
 
 
 class ProductTranslation(models.Model):

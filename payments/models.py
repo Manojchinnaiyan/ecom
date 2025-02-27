@@ -1,5 +1,6 @@
 from django.db import models
 import uuid
+from django.utils.translation import gettext_lazy as _
 
 
 # Create your models here.
@@ -10,7 +11,7 @@ class Payment(models.Model):
         ("completed", "Completed"),
         ("failed", "Failed"),
         ("refunded", "Refunded"),
-        ("patially_refunded", "Partially Refunded"),
+        ("partially_refunded", "Partially Refunded"),
     ]
 
     PAYMENT_METHOD_CHOICES = [
@@ -61,9 +62,9 @@ class Refund(models.Model):
         ("duplicate", "Duplicate"),
         ("defective", "Defective"),
         ("wrong_item", "Wrong Item"),
-        ("not_as_described", "Not as Described")("late_delivery", "Late Delivery")(
-            "fraudulent", "Fraudulent"
-        ),
+        ("not_as_described", "Not as Described"),
+        ("late_delivery", "Late Delivery"),
+        ("fraudulent", "Fraudulent"),
         ("customer_request", "Customer Request"),
         ("other", "Other"),
     ]
@@ -79,7 +80,9 @@ class Refund(models.Model):
     status = models.CharField(
         max_length=20, choices=REFUND_STATUS_CHOICES, default="pending"
     )
-    reason = models.TextField(blank=True, null=True)
+    reason = models.CharField(
+        max_length=20, choices=REFUND_REASON_CHOICES, default="other"
+    )
     notes = models.TextField(blank=True, null=True)
 
     transaction_id = models.CharField(max_length=255, blank=True, null=True)

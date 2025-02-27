@@ -1,9 +1,10 @@
 from django.db import models
-from django.contrib.auth.models import AbstrctUser
+from django.contrib.auth.models import AbstractUser
+import uuid
 
 
 # Create your models here.
-class User(AbstrctUser):
+class User(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email = models.EmailField(unique=True)
     phone = models.CharField(max_length=20, blank=True, null=True)
@@ -40,8 +41,8 @@ class Address(models.Model):
     country = models.CharField(max_length=100)
     phone = models.CharField(max_length=20)
 
-    create_at = models.DateTimeField(auto_now_add=True)
-    update_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name = "Address"
@@ -63,7 +64,7 @@ class UserProfile(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
     bio = models.TextField(blank=True, null=True)
-    preference = models.JSONField(default=dict, blank=True)
+    preferences = models.JSONField(default=dict, blank=True)
     marketing_opt_in = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
