@@ -5,16 +5,20 @@ ENV PYTHONUNBUFFERED 1
 
 WORKDIR /app
 
-# Install dependencies
-COPY requirements/production.txt .
-RUN pip install --no-cache-dir -r production.txt
-
-# Copy project
+# Copy project first
 COPY . .
 
-# Collect static files
-RUN python manage.py collectstatic --noinput
+# Install dependencies
+RUN pip install --no-cache-dir -r requirements/base.txt
+RUN pip install gunicorn
+
+# Create static and media directories and ensure they're writable
+RUN mkdir -p staticfiles media && chmod -R 777 staticfiles media
 
 EXPOSE 8000
 
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "core.wsgi:application"]
+# Use a startup script instead of running collectstatic during build
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
+
+CMD ["/start.sh"]

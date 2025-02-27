@@ -1,10 +1,11 @@
-# docker-compose.yml
 version: "3.8"
 
 services:
   web:
     build: .
     restart: always
+    ports:
+      - "8000:8000"
     volumes:
       - .:/app
       - static_volume:/app/staticfiles
@@ -13,7 +14,6 @@ services:
       - .env
     depends_on:
       - db
-      - redis
     networks:
       - ecommerce_network
 
@@ -21,44 +21,10 @@ services:
     image: postgres:15
     volumes:
       - postgres_data:/var/lib/postgresql/data/
-    env_file:
-      - .env
     environment:
       - POSTGRES_PASSWORD=${DB_PASSWORD}
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_DB=${DB_NAME}
-    networks:
-      - ecommerce_network
-
-  redis:
-    image: redis:7
-    networks:
-      - ecommerce_network
-
-  celery:
-    build: .
-    command: celery -A core worker -l info
-    volumes:
-      - .:/app
-    env_file:
-      - .env
-    depends_on:
-      - web
-      - redis
-      - db
-    networks:
-      - ecommerce_network
-
-  nginx:
-    image: nginx:1.25
-    ports:
-      - "80:80"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
-      - static_volume:/home/app/staticfiles
-      - media_volume:/home/app/media
-    depends_on:
-      - web
     networks:
       - ecommerce_network
 
